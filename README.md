@@ -1,9 +1,9 @@
 # StableDiffusion.CPP-GUI
 
 
-This is a super KISS webGUI for stable diffusion.cpp tailored to what i needed, so wont I pretend its 'feature complete' for the masses.  I also wanted to keep dependencies to a bare minimum to run anywhere. So all it needs is python, flask and pillow. It can serve as a startling point for others and is easy to add more variables, so figured id share.  Future features may include up-sizing and and 'seed image' and such. But no guarantees.
+This is a super KISS webGUI for stable diffusion.cpp tailored to what i needed, so wont I pretend its 'feature complete' for the masses.  I also wanted to keep dependencies to a bare minimum to run anywhere. So all it needs is python, flask and pillow. It can serve as a startling point for others and is easy to add more variables, so figured id share.  Future features may include image "up-sizing" and "seed images" and such. But no guarantees.
 
-It basically runs a unique canned command-line for each model, with the option for a few variables. Shows a preview of the image and will let you download it + the parameters used as a zip.  In my case, most of the time i use the same parameters for a respective model, so why clutter up the interface?  It also cleans up the image folder so you don't end up with a lot of trash in there after downloading.  
+It basically runs a unique canned command-line for each model, with the option for a few variables via the GUI. Shows a preview of the image and will let you download it + the parameters used as a zip.  In my case, most of the time i use the same parameters every time for a specific model, so why clutter up the interface?  It also cleans up the image folder so you don't end up with a lot of trash in there after downloading.  
 
 Current variables
 
@@ -17,7 +17,7 @@ Current variables
 
 Its using a dark mode, but you can always change the CSS.
 
-It currently exposes the IP to all of your network. You can change that if needed by changing the published ip from 0.0.0.0 when it calls flask, at the bottom of the code. Change the port there too. 
+It currently exposes the IP to all of your network. You can change that if needed by changing the published ip from 0.0.0.0 when it calls flask, at the bottom of the code. Change the port there too, if needed. 
 
 To run:
 
