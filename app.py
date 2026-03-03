@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Configuration - easily add or modify models here
 MODEL_CONFIGS = {
     "z Image Turbo": {
-        "command": "./bin/stable-diffusion.cpp/build/bin/sd-cli",
+        "command": ".bin/sd-cli",
         "args": [
             "--diffusion-model", "./models/z_image_turbo-Q8_0.gguf",
             "--llm", "./models/qwen_3_4b-Q8_0.gguf",
