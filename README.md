@@ -21,7 +21,7 @@ It currently exposes the IP to all of your network. You can change that if neede
 
 To run:
 
-    Copy the SD.CPP command line binary to the root folder of the project, which can be downloaded or easily built from their instructions if they dont have a binary for you.
+    Copy the SD.CPP command line binary to the root folder of the project, which can be downloaded or easily built from their instructions if they dont have a binary for you. The project is at https://github.com/leejet/stable-diffusion.cpp/tree/master
     Place any models and vae's you want in the model folder
     Place any loras you want to use in the lora folder. 
     Configure your models 'defaults'. Look at the section "model configs" for a few sample configurations. If you add another, it will magically appear in the choice list on a server restart.  Check the SD.CPP CLI documentation for the exhaustive list of possible parameters. 
