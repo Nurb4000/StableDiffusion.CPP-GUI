@@ -9,7 +9,7 @@ Current variables
 
     Model Name - this will be the ones you have configured. It does NOT scan your folder and make guesses.
     Lora Name - this will scan your folder on server start for your list. It defaults to none.
-    Height and Width  - defaults  of 1024x768.
+    Width and Height - defaults  of 1024x768.
     Seed - defaults to random.
     Steps - defaults to 10 
     File name - it defaults to using the date/time.
