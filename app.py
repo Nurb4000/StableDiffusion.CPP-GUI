@@ -30,6 +30,40 @@ MODEL_CONFIGS = {
             "-s", "{seed}"
         ]
     },
+    "Qwen Image": {
+        "command": "/opt/sd-gui/bin/sd-cli",
+        "args": [
+            "--diffusion-model", "/opt/sd-gui/models/Qwen_Image-Q4_K_M.gguf",
+            "--llm", "/opt/sd-gui/models/Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf",
+            "-H", "{height}",
+            "-W", "{width}",
+            "--vae", "/opt/sd-gui/models/qwen_image_vae.safetensors",
+            "--vae-conv-direct",
+            "--sampling-method", "euler",
+            "--scheduler", "smoothstep",
+            "--steps", "{steps}",
+            "--cfg-scale", "2.5",
+            "-p", "{prompt}",
+            "-s", "{seed}"
+        ]
+    },
+   "z Image Base": {
+        "command": "/opt/sd-gui/bin/sd-cli",
+        "args": [
+            "--diffusion-model", "/opt/sd-gui/models/z-image-BF16.gguf",
+            "--llm", "/opt/sd-gui/models/qwen_3_4b-Q8_0.gguf",
+            "-H", "{height}",
+            "-W", "{width}",
+            "--vae", "/opt/sd-gui/models/ae.safetensors",
+            "--vae-conv-direct",
+            "--sampling-method", "euler",
+            "--scheduler", "smoothstep",
+            "--steps", "{steps}",
+            "--cfg-scale", "1",
+            "-p", "{prompt}",
+            "-s", "{seed}"
+        ]
+    },
     "RealVisXL_V5": {
         "command": "./bin/sd-cli",
         "args": [
