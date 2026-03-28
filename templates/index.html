@@ -12,110 +12,90 @@
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        
         h1, h2, h3, h4, h5, h6 {
             color: #ffffff;
             font-weight: 600;
         }
-        
         .card {
             background-color: #1e1e1e;
             border: 1px solid #333;
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
         .card-body {
             padding: 1.5rem;
         }
-        
         .form-label {
             color: #f0f0f0;
             font-weight: 500;
             margin-bottom: 0.5rem;
         }
-        
         .form-control, .form-select {
             background-color: #2d2d2d;
             color: #ffffff;
             border: 1px solid #444;
             padding: 0.5rem 0.75rem;
         }
-        
         .form-control:focus, .form-select:focus {
             background-color: #2d2d2d;
             color: #ffffff;
             border-color: #666;
             box-shadow: 0 0 0 0.25rem rgba(130, 130, 130, 0.25);
         }
-        
         .form-check-label {
             color: #f0f0f0;
         }
-        
         .btn-primary {
             background-color: #1a73e8;
             border-color: #1a73e8;
             font-weight: 500;
         }
-        
         .btn-primary:hover {
             background-color: #1557b0;
             border-color: #1557b0;
         }
-        
         .btn-outline-secondary {
             color: #f0f0f0;
             border-color: #5f6368;
         }
-        
         .btn-outline-secondary:hover {
             background-color: #5f6368;
             border-color: #5f6368;
         }
-        
         .output-image {
             max-width: 100%;
             border-radius: 8px;
             margin-top: 20px;
             border: 1px solid #444;
         }
-        
         .loading {
             display: none;
             text-align: center;
             padding: 40px 20px;
         }
-        
         .spinner-border {
             width: 3rem;
             height: 3rem;
         }
-        
         .alert {
             margin-top: 1rem;
         }
-        
         .mb-3 {
             margin-bottom: 1.5rem !important;
         }
-        
         #output p {
             color: #e0e0e0;
             margin-bottom: 0.5rem;
         }
-        
         .btn-success {
             background-color: #28a745;
             border-color: #28a745;
             font-weight: 500;
         }
-        
         .btn-success:hover {
             background-color: #218838;
             border-color: #1e7e34;
         }
-        
         .alert-danger {
             background-color: #dc3545;
             border-color: #dc3545;
@@ -126,7 +106,6 @@
 <body>
     <div class="container">
         <h1 class="mb-4">Stable Diffusion GUI</h1>
-        
         <div class="card">
             <div class="card-body">
                 <form id="sdForm">
@@ -138,7 +117,6 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
                     <div class="mb-3">
                         <label for="lora" class="form-label">LoRA (Optional)</label>
                         <select class="form-select" id="lora" name="lora">
@@ -148,12 +126,10 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
                     <div class="mb-3">
                         <label for="prompt" class="form-label">Prompt</label>
                         <textarea class="form-control" id="prompt" name="prompt" rows="3" required></textarea>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label for="width" class="form-label">Width</label>
@@ -175,29 +151,24 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="useRandomSeed" name="useRandomSeed" checked>
                         <label class="form-check-label" for="useRandomSeed">Use random seed</label>
                     </div>
-                    
                     <div class="mb-3">
                         <label for="filename" class="form-label">Filename (leave blank for auto-generated)</label>
                         <input type="text" class="form-control" id="filename" name="filename">
                     </div>
-                    
                     <button type="submit" class="btn btn-primary">Generate</button>
                 </form>
             </div>
         </div>
-        
         <div id="loading" class="loading">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Generating...</span>
             </div>
             <p class="mt-2">Generating image, please wait...</p>
         </div>
-        
         <div id="output" class="card" style="display: none;">
             <div class="card-body">
                 <h3>Generated Image</h3>
@@ -210,14 +181,11 @@
                 </div>
             </div>
         </div>
-        
         <div id="error" class="alert alert-danger mt-3" style="display: none;"></div>
     </div>
-
     <script>
         document.getElementById('sdForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             // Show loading, hide output and error
             document.getElementById('loading').style.display = 'block';
             document.getElementById('output').style.display = 'none';
@@ -254,7 +222,6 @@
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                
                 // Display the generated image
                 document.getElementById('generatedImage').src = data.image;
                 document.getElementById('outputSeed').textContent = data.seed;
