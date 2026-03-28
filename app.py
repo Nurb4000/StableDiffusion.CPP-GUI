@@ -14,47 +14,13 @@ app = Flask(__name__)
 # Configuration - easily add or modify models here
 MODEL_CONFIGS = {
     "z Image Turbo": {
-        "command": ".bin/sd-cli",
+        "command": "./bin/sd-cli",
         "args": [
             "--diffusion-model", "./models/z_image_turbo-Q8_0.gguf",
             "--llm", "./models/qwen_3_4b-Q8_0.gguf",
             "-H", "{height}",
             "-W", "{width}",
             "--vae", "./models/ae.safetensors",
-            "--vae-conv-direct",
-            "--sampling-method", "euler",
-            "--scheduler", "smoothstep",
-            "--steps", "{steps}",
-            "--cfg-scale", "1",
-            "-p", "{prompt}",
-            "-s", "{seed}"
-        ]
-    },
-    "Qwen Image": {
-        "command": "/opt/sd-gui/bin/sd-cli",
-        "args": [
-            "--diffusion-model", "/opt/sd-gui/models/Qwen_Image-Q4_K_M.gguf",
-            "--llm", "/opt/sd-gui/models/Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf",
-            "-H", "{height}",
-            "-W", "{width}",
-            "--vae", "/opt/sd-gui/models/qwen_image_vae.safetensors",
-            "--vae-conv-direct",
-            "--sampling-method", "euler",
-            "--scheduler", "smoothstep",
-            "--steps", "{steps}",
-            "--cfg-scale", "2.5",
-            "-p", "{prompt}",
-            "-s", "{seed}"
-        ]
-    },
-   "z Image Base": {
-        "command": "/opt/sd-gui/bin/sd-cli",
-        "args": [
-            "--diffusion-model", "/opt/sd-gui/models/z-image-BF16.gguf",
-            "--llm", "/opt/sd-gui/models/qwen_3_4b-Q8_0.gguf",
-            "-H", "{height}",
-            "-W", "{width}",
-            "--vae", "/opt/sd-gui/models/ae.safetensors",
             "--vae-conv-direct",
             "--sampling-method", "euler",
             "--scheduler", "smoothstep",
@@ -120,14 +86,36 @@ def clean_temp_files(files):
         except Exception as e:
             print(f"Error deleting file {file}: {e}")
 
+def clean_previous_images():
+    """Removes all output files except the current one being generated"""
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        return
+    
+    # Get all output files
+    files = [f for f in os.listdir(output_dir) if f.endswith(('.png', '.txt'))]
+    
+    # Remove all except the current generation
+    for file in files:
+        # Skip files that match the current generation pattern
+        if file.startswith("sd_") and file.endswith(".png") or file.endswith(".txt"):
+            continue
+        try:
+            os.remove(os.path.join(output_dir, file))
+        except Exception as e:
+            print(f"Error removing previous file {file}: {e}")
+
 @app.route('/')
 def index():
-    return render_template('index.html', 
-                         models=list(MODEL_CONFIGS.keys()),
-                         loras=get_loras())
+    return render_template('index.html',
+                          models=list(MODEL_CONFIGS.keys()),
+                          loras=get_loras())
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    # Clean up previous generations before creating new ones
+    clean_previous_images()
+    
     # Get form data
     data = request.json
     prompt = data.get('prompt', '')
@@ -139,7 +127,7 @@ def generate():
     filename = data.get('filename', '')
     model = data.get('model', list(MODEL_CONFIGS.keys())[0])
     lora_file = data.get('lora', '')
-
+    
     # Generate random seed if needed
     if use_random_seed or not seed:
         seed = random.randint(0, 2**32 - 1)
@@ -148,7 +136,7 @@ def generate():
             seed = int(seed)
         except ValueError:
             return jsonify({'error': 'Seed must be an integer'}), 400
-
+    
     # Generate filename if needed
     if not filename:
         filename = generate_filename(seed)
@@ -156,11 +144,11 @@ def generate():
     
     # Create output directory if it doesn't exist
     os.makedirs('output', exist_ok=True)
-
+    
     # Get model config
     if model not in MODEL_CONFIGS:
         return jsonify({'error': 'Invalid model selected'}), 400
-
+    
     config = MODEL_CONFIGS[model]
     command = [config['command']]
     
@@ -185,7 +173,7 @@ def generate():
     # Add output file
     output_image = f"{base_filename}.png"
     command.extend(['-o', output_image])
-
+    
     # Run the command
     try:
         print("Running command:", " ".join(command))
@@ -230,7 +218,6 @@ def generate():
             'filename': filename,
             'seed': seed
         })
-        
     except subprocess.CalledProcessError as e:
         return jsonify({'error': f"Generation failed: {e.stderr}"}), 500
     except Exception as e:
@@ -241,7 +228,7 @@ def download(filename):
     base_path = os.path.join('output', filename)
     image_path = f"{base_path}.png"
     text_path = f"{base_path}.txt"
-
+    
     @after_this_request
     def remove_files(response):
         try:
@@ -249,7 +236,7 @@ def download(filename):
         except Exception as e:
             print(f"Error removing files: {e}")
         return response
-
+    
     # Create zip file
     import zipfile
     from io import BytesIO
@@ -268,9 +255,7 @@ def download(filename):
         memory_file,
         mimetype='application/zip',
         as_attachment=True,
-        # attachment_filename=f"{filename}.zip" # Use this for Flask < 2.0
-        download_name=f"{filename}.zip" # Use this for Flask > 2.0
-        
+        attachment_filename=f"{filename}.zip"
     )
 
 if __name__ == '__main__':
