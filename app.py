@@ -11,6 +11,11 @@ import shutil
 
 app = Flask(__name__)
 
+REFIMAGES_DIR = './refimages'
+
+os.makedirs('output', exist_ok=True)
+os.makedirs(REFIMAGES_DIR, exist_ok=True)
+
 # Configuration - easily add or modify models here
 MODEL_CONFIGS = {
     "z Image Turbo": {
@@ -105,17 +110,43 @@ def clean_previous_images():
         except Exception as e:
             print(f"Error removing previous file {file}: {e}")
 
+def clean_ref_images():
+    """Remove all files in the refimages directory"""
+    if not os.path.exists(REFIMAGES_DIR):
+        return
+    for f in os.listdir(REFIMAGES_DIR):
+        try:
+            os.remove(os.path.join(REFIMAGES_DIR, f))
+        except Exception as e:
+            print(f"Error removing ref image {f}: {e}")
+
 @app.route('/')
 def index():
     return render_template('index.html',
                           models=list(MODEL_CONFIGS.keys()),
                           loras=get_loras())
 
+@app.route('/upload-ref', methods=['POST'])
+def upload_ref():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    os.makedirs(REFIMAGES_DIR, exist_ok=True)
+    clean_ref_images()
+    filename = f"ref_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+    filepath = os.path.join(REFIMAGES_DIR, filename)
+    file.save(filepath)
+
+    return jsonify({'filename': filename})
+
 @app.route('/generate', methods=['POST'])
 def generate():
     # Clean up previous generations before creating new ones
     clean_previous_images()
-    
+
     # Get form data
     data = request.json
     prompt = data.get('prompt', '')
@@ -127,6 +158,9 @@ def generate():
     filename = data.get('filename', '')
     model = data.get('model', list(MODEL_CONFIGS.keys())[0])
     lora_file = data.get('lora', '')
+    use_ref_image = data.get('useRefImage', False)
+    ref_image = data.get('refImage', '')
+    ref_strength = data.get('refStrength', 0.5)
     
     # Generate random seed if needed
     if use_random_seed or not seed:
@@ -155,10 +189,10 @@ def generate():
     # Add lora model directory if lora file is selected
     if lora_file:
         command.extend(['--lora-model-dir', './loras'])
-    
+
     # Format prompt with lora if selected
     formatted_prompt = f"{prompt} <lora:{lora_file}:1>" if lora_file else prompt
-    
+
     # Build command arguments
     args = [arg.format(
         prompt=formatted_prompt,
@@ -167,9 +201,14 @@ def generate():
         steps=steps,
         seed=seed
     ) for arg in config['args']]
-    
+
     command.extend(args)
-    
+
+    # Add ref image arguments if enabled
+    if use_ref_image and ref_image:
+        ref_path = os.path.join(REFIMAGES_DIR, ref_image)
+        command.extend(['-i', ref_path, '--strength', str(ref_strength)])
+
     # Add output file
     output_image = f"{base_filename}.png"
     command.extend(['-o', output_image])
@@ -203,6 +242,8 @@ def generate():
             'seed': seed,
             'model': model,
             'lora': lora_file if lora_file else "None",
+            'refImage': ref_image if use_ref_image else "",
+            'refStrength': ref_strength if use_ref_image else "",
             'filename': filename,
             'command': ' '.join(command)
         }
@@ -216,7 +257,8 @@ def generate():
         return jsonify({
             'image': f"data:image/png;base64,{img_str}",
             'filename': filename,
-            'seed': seed
+            'seed': seed,
+            'refImage': ref_image if use_ref_image else ""
         })
     except subprocess.CalledProcessError as e:
         return jsonify({'error': f"Generation failed: {e.stderr}"}), 500
@@ -228,28 +270,36 @@ def download(filename):
     base_path = os.path.join('output', filename)
     image_path = f"{base_path}.png"
     text_path = f"{base_path}.txt"
-    
+    ref_image = request.args.get('ref', '')
+
     @after_this_request
     def remove_files(response):
         try:
-            clean_temp_files([image_path, text_path])
+            files_to_clean = [image_path, text_path]
+            if ref_image:
+                files_to_clean.append(os.path.join(REFIMAGES_DIR, ref_image))
+            clean_temp_files(files_to_clean)
         except Exception as e:
             print(f"Error removing files: {e}")
         return response
-    
+
     # Create zip file
     import zipfile
     from io import BytesIO
-    
+
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
         if os.path.exists(image_path):
             zf.write(image_path, f"{filename}.png")
         if os.path.exists(text_path):
             zf.write(text_path, f"{filename}.txt")
-    
+        if ref_image:
+            ref_path = os.path.join(REFIMAGES_DIR, ref_image)
+            if os.path.exists(ref_path):
+                zf.write(ref_path, ref_image)
+
     memory_file.seek(0)
-    
+
     # Use attachment_filename for older Flask versions
     return send_file(
         memory_file,
