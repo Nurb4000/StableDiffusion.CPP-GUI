@@ -32,6 +32,7 @@ To run:
 
 And an obligatory screenshot
 
-<img width="922" height="932" alt="screenshot" src="https://github.com/user-attachments/assets/3f31ca7e-f027-4c0d-b9d6-f913770cd371" />
+<img width="686" height="828" alt="image" src="https://github.com/user-attachments/assets/b7cc5bb7-ee3b-4ef7-8b2c-90b11232542a" />
+
 
 
