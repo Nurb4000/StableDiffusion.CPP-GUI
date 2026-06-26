@@ -15,6 +15,8 @@ Current variables
     File name - it defaults to using the date/time.
     More may be added later, but no current plans to add more.
 
+Now supports reference images + Strength 
+
 Its using a dark mode, but you can always change the CSS.
 
 It currently exposes the IP to all of your network. You can change that if needed by changing the published ip from 0.0.0.0 when it calls flask, at the bottom of the code. Change the port there too, if needed. 
