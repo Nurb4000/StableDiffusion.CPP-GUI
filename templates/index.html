@@ -127,6 +127,22 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="useRefImage" name="useRefImage">
+                            <label class="form-check-label" for="useRefImage">Use Reference Image</label>
+                        </div>
+                        <div id="refImageSettings" style="display: none; margin-top: 0.75rem;">
+                            <div class="mb-3">
+                                <label for="refImage" class="form-label">Reference Image</label>
+                                <input class="form-control" type="file" id="refImage" name="refImage" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <label for="refStrength" class="form-label">Strength</label>
+                                <input type="number" class="form-control" id="refStrength" name="refStrength" value="0.5" min="0" max="1" step="0.05">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label for="prompt" class="form-label">Prompt</label>
                         <textarea class="form-control" id="prompt" name="prompt" rows="3" required></textarea>
                     </div>
@@ -184,6 +200,10 @@
         <div id="error" class="alert alert-danger mt-3" style="display: none;"></div>
     </div>
     <script>
+        document.getElementById('useRefImage').addEventListener('change', function() {
+            document.getElementById('refImageSettings').style.display = this.checked ? 'block' : 'none';
+        });
+
         document.getElementById('sdForm').addEventListener('submit', function(e) {
             e.preventDefault();
             // Show loading, hide output and error
@@ -191,7 +211,52 @@
             document.getElementById('output').style.display = 'none';
             document.getElementById('error').style.display = 'none';
             
-            // Get form data
+            const useRefImage = document.getElementById('useRefImage').checked;
+            const refImageFile = document.getElementById('refImage').files[0];
+            
+            function doGenerate(formData) {
+                fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error || 'Unknown error'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    // Display the generated image
+                    document.getElementById('generatedImage').src = data.image;
+                    document.getElementById('outputSeed').textContent = data.seed;
+                    document.getElementById('output').style.display = 'block';
+                    
+                    // Set up download button with ref image
+                    let downloadUrl = `/download/${data.filename}`;
+                    if (data.refImage) {
+                        downloadUrl += `?ref=${encodeURIComponent(data.refImage)}`;
+                    }
+                    document.getElementById('downloadBtn').onclick = function() {
+                        window.location.href = downloadUrl;
+                    };
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('error').textContent = error.message;
+                    document.getElementById('error').style.display = 'block';
+                })
+                .finally(() => {
+                    document.getElementById('loading').style.display = 'none';
+                });
+            }
+            
+            // Build base form data
             const formData = {
                 prompt: document.getElementById('prompt').value,
                 height: parseInt(document.getElementById('height').value),
@@ -201,45 +266,41 @@
                 useRandomSeed: document.getElementById('useRandomSeed').checked,
                 filename: document.getElementById('filename').value,
                 model: document.getElementById('model').value,
-                lora: document.getElementById('lora').value
+                lora: document.getElementById('lora').value,
+                useRefImage: useRefImage,
+                refStrength: parseFloat(document.getElementById('refStrength').value)
             };
             
-            // Send request to server
-            fetch('/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(err.error || 'Unknown error'); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                // Display the generated image
-                document.getElementById('generatedImage').src = data.image;
-                document.getElementById('outputSeed').textContent = data.seed;
-                document.getElementById('output').style.display = 'block';
+            if (useRefImage && refImageFile) {
+                // Upload ref image first
+                const uploadData = new FormData();
+                uploadData.append('file', refImageFile);
                 
-                // Set up download button
-                document.getElementById('downloadBtn').onclick = function() {
-                    window.location.href = `/download/${data.filename}`;
-                };
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('error').textContent = error.message;
-                document.getElementById('error').style.display = 'block';
-            })
-            .finally(() => {
-                document.getElementById('loading').style.display = 'none';
-            });
+                fetch('/upload-ref', {
+                    method: 'POST',
+                    body: uploadData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error || 'Upload failed'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    formData.refImage = data.filename;
+                    doGenerate(formData);
+                })
+                .catch(error => {
+                    document.getElementById('error').textContent = error.message;
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('loading').style.display = 'none';
+                });
+            } else {
+                doGenerate(formData);
+            }
         });
         
         function generateRandomSeed() {
